@@ -3,8 +3,6 @@ package reactivedropbox.actors
 import com.dropbox.core._
 import reactivedropbox.core._
 import java.io.{FileOutputStream, File, FileInputStream}
-import reactivedropbox.core.Entry
-import reactivedropbox.core.LocalFile
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -56,9 +54,8 @@ trait Client {
   /**
    * Poll for changes
    *
-   * @param interval
-   * @param f
-   * @return
+   * @param interval interval between refreshes
+   * @param f function which will be run on every refresh
    */
   def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit)
 }
@@ -145,14 +142,11 @@ class DefaultClient(config: DbxRequestConfig, accessToken: String) extends Clien
   }
 
   /**
-   * Poll for changes
-   *
-   * @param interval
-   * @param f
+   * @param interval interval between refreshes
+   * @param f function which will be run on every refresh
    * @return
    */
   def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit) = {
-    println("start polling!")
     var pollCache = cache.toList
     TypedActor.context.system.scheduler.schedule(interval, interval) {
       refresh()
