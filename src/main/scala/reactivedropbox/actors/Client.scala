@@ -5,6 +5,12 @@ import com.dropbox.core.{DbxEntry, DbxWriteMode, DbxClient, DbxRequestConfig}
 import reactivedropbox.core.{DownloadFile, LocalFile, Entry, AddFile}
 import java.io.{FileOutputStream, File, FileInputStream}
 
+/**
+ * Client which is connected to a dropbox account
+ *
+ * @param config Configuration
+ * @param accessToken Access Token
+ */
 class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
 
   val client = new DbxClient(config, accessToken)
@@ -38,7 +44,6 @@ class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
       outputStream.close()
     }
   }
-
 
   def receive = {
     case AddFile(source, target, mode) => sender ! uploadFile(source, target, mode)
