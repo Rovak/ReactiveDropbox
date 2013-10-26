@@ -7,9 +7,9 @@ import com.typesafe.config.ConfigFactory
 
 object Global {
 
-  val config = ConfigFactory.load().getConfig("robobox")
+  val config = ConfigFactory.load().getConfig("reactivedropbox")
 
   val system = ActorSystem("reactivedropbox")
-  val requestConfig = new DbxRequestConfig("Robobox/0.1", Locale.getDefault.toString)
+  val requestConfig = new DbxRequestConfig(config.getString("clientid"), Locale.getDefault.toString)
 
 }
