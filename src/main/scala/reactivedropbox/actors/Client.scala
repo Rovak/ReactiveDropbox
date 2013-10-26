@@ -1,21 +1,61 @@
 package reactivedropbox.actors
 
-import akka.actor.Actor
-import com.dropbox.core.{DbxEntry, DbxWriteMode, DbxClient, DbxRequestConfig}
+import com.dropbox.core.{DbxWriteMode, DbxClient, DbxRequestConfig}
 import reactivedropbox.core._
 import java.io.{FileOutputStream, File, FileInputStream}
 import reactivedropbox.core.Entry
-import reactivedropbox.core.AddFile
-import reactivedropbox.core.DownloadFile
 import reactivedropbox.core.LocalFile
+import scala.concurrent.Future
 
 /**
- * Client which is connected to a dropbox account
+ * Client interface used for typed actor
+ */
+trait Client {
+
+  /**
+   * Upload a file
+   *
+   * @param localPath local path
+   * @param remotePath remote path
+   * @param mode writeMode
+   * @return Entry
+   */
+  def uploadFile(localPath: String, remotePath: String, mode: DbxWriteMode): Future[Entry]
+
+  /**
+   * Download a file
+   *
+   * @param localPath local path
+   * @param remotePath remote path
+   * @param revision revision
+   */
+  def downloadFile(localPath: String, remotePath: String, revision: Option[String] = None): Future[LocalFile]
+
+  /**
+   * List the files
+   *
+   * @param remotePath remote path
+   */
+  def listFiles(remotePath: String): Future[DirectoryListing]
+
+  /**
+   * Search for files which match the query
+   *
+   * @param query criteria
+   * @param path path where to search, it will recurse into child items
+   */
+  def search(query: String, path: String = "/")
+}
+
+/**
+ * Client Implementation
  *
  * @param config Configuration
  * @param accessToken Access Token
  */
-class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
+class DefaultClient(config: DbxRequestConfig, accessToken: String) extends Client {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val client = new DbxClient(config, accessToken)
 
@@ -26,7 +66,7 @@ class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
    * @param remotePath remote path where to upload
    * @param mode writeMode
    */
-  def uploadFile(localPath: String, remotePath: String, mode: DbxWriteMode) = {
+  def uploadFile(localPath: String, remotePath: String, mode: DbxWriteMode) = Future {
     val inputFile = new File(localPath)
     val inputStream = new FileInputStream(inputFile)
     val uploadedFile = client.uploadFile(remotePath, mode, inputFile.length(), inputStream)
@@ -39,7 +79,7 @@ class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
    * @param localFile Local location where to place the new file
    * @return New local file
    */
-  def downloadFile(remoteFile: String, localFile: String, revision: Option[String] = None) = {
+  def downloadFile(remoteFile: String, localFile: String, revision: Option[String] = None) = Future {
     val outputStream = new FileOutputStream(localFile)
     try {
       val downloadedFile = client.getFile(remoteFile, revision.getOrElse(null), outputStream)
@@ -53,16 +93,17 @@ class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
    * Remote path
    * @param remotePath Path
    */
-  def listFiles(remotePath: String) = {
+  def listFiles(remotePath: String) = Future {
     DirectoryListing(client.getMetadataWithChildren(remotePath), remotePath)
   }
 
-  def receive = {
-    case AddFile(source, target, mode) =>
-      sender ! uploadFile(source, target, mode)
-    case DownloadFile(remote, local, revision) =>
-      sender ! downloadFile(remote, local, revision)
-    case ListFiles(remotePath) =>
-      sender ! listFiles(remotePath)
+  /**
+   * Search for files which match the query
+   *
+   * @param query criteria
+   * @param path path where to search, it will recurse into child items
+   */
+  def search(query: String, path: String) = Future {
+
   }
 }
