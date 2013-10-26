@@ -6,9 +6,6 @@ import com.dropbox.core.{DbxAppInfo, DbxWebAuthNoRedirect}
 import reactivedropbox.Global
 import reactivedropbox.core.AppInfo
 
-case class RequestAuthorizationUrl(appInfo: AppInfo)
-case class CleanupPendingAuthorizations()
-
 /**
  *
  */
@@ -28,6 +25,7 @@ class Authorization extends Actor {
    * Start scheduling garbage collection of old requests
    */
   override def preStart() = {
+    import scala.concurrent.ExecutionContext.Implicits.global
     context.system.scheduler.schedule(1 minute, 1 minute) {
       self ! CleanupPendingAuthorizations()
     }
@@ -39,3 +37,7 @@ class Authorization extends Actor {
 
   }
 }
+
+
+case class RequestAuthorizationUrl(appInfo: AppInfo)
+case class CleanupPendingAuthorizations()
