@@ -6,7 +6,7 @@ import java.io.{FileOutputStream, File, FileInputStream}
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import akka.actor.TypedActor
+import akka.actor.{Cancellable, TypedActor}
 import reactivedropbox.core.Entry
 import reactivedropbox.core.SearchResult
 import reactivedropbox.core.LocalFile
@@ -57,7 +57,7 @@ trait Client {
    * @param interval interval between refreshes
    * @param f function which will be run on every refresh
    */
-  def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit)
+  def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit): Cancellable
 }
 
 /**
