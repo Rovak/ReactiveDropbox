@@ -55,3 +55,13 @@ case class ListFiles(remotePath: String)
  * @param path
  */
 case class DirectoryListing(files: DbxEntry.WithChildren, path: String)
+
+/**
+ * Entries
+ * @param entries
+ */
+case class SearchResult(entries: List[DbxEntry], path: String)
+
+
+case class EntryAdded(entry: DbxEntry)
+case class EntryRemoved(entry: DbxEntry)
