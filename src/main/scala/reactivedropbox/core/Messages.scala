@@ -42,3 +42,16 @@ case class LocalFile(path: String, entry: DbxEntry) {
  * @param revision optional revision which to download
  */
 case class DownloadFile(remotePath: String, localPath: String, revision: Option[String] = None)
+
+/**
+ * Requests a list of files for the given remote path
+ * @param remotePath Path which to list
+ */
+case class ListFiles(remotePath: String)
+
+/**
+ * Directory listing
+ * @param files
+ * @param path
+ */
+case class DirectoryListing(files: DbxEntry.WithChildren, path: String)

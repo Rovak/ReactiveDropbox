@@ -2,8 +2,12 @@ package reactivedropbox.actors
 
 import akka.actor.Actor
 import com.dropbox.core.{DbxEntry, DbxWriteMode, DbxClient, DbxRequestConfig}
-import reactivedropbox.core.{DownloadFile, LocalFile, Entry, AddFile}
+import reactivedropbox.core._
 import java.io.{FileOutputStream, File, FileInputStream}
+import reactivedropbox.core.Entry
+import reactivedropbox.core.AddFile
+import reactivedropbox.core.DownloadFile
+import reactivedropbox.core.LocalFile
 
 /**
  * Client which is connected to a dropbox account
@@ -45,8 +49,20 @@ class Client(config: DbxRequestConfig, accessToken: String) extends Actor {
     }
   }
 
+  /**
+   * Remote path
+   * @param remotePath Path
+   */
+  def listFiles(remotePath: String) = {
+    DirectoryListing(client.getMetadataWithChildren(remotePath), remotePath)
+  }
+
   def receive = {
-    case AddFile(source, target, mode) => sender ! uploadFile(source, target, mode)
-    case DownloadFile(remote, local, revision) => sender ! downloadFile(remote, local, revision)
+    case AddFile(source, target, mode) =>
+      sender ! uploadFile(source, target, mode)
+    case DownloadFile(remote, local, revision) =>
+      sender ! downloadFile(remote, local, revision)
+    case ListFiles(remotePath) =>
+      sender ! listFiles(remotePath)
   }
 }
