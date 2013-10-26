@@ -9,8 +9,8 @@ import java.util.Locale
  */
 object Authenticator {
 
-  val appInfo = AppInfo("", "")
-  val config = new DbxRequestConfig("ReactiveDropbox/0.1", Locale.getDefault.toString)
+  val appInfo = AppInfo(Global.config.getString("api.key"), Global.config.getString("api.secret"))
+  val config = new DbxRequestConfig("Robobox/0.1", Locale.getDefault.toString)
 
   def requestAuthorizationUrl = {
     val webAuth = new DbxWebAuthNoRedirect(config, new DbxAppInfo(appInfo.key, appInfo.secret))
