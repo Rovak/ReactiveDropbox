@@ -6,59 +6,10 @@ import java.io.{FileOutputStream, File, FileInputStream}
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import akka.actor.{Cancellable, TypedActor}
-import reactivedropbox.core.Entry
-import reactivedropbox.core.SearchResult
-import reactivedropbox.core.LocalFile
-import reactivedropbox.core.DirectoryListing
+import akka.actor.TypedActor
+import reactivedropbox.core._
+import reactivedropbox.Client
 
-/**
- * Client interface used for typed actor
- */
-trait Client {
-
-  /**
-   * Upload a file
-   *
-   * @param localPath local path
-   * @param remotePath remote path
-   * @param mode writeMode
-   * @return Entry
-   */
-  def upload(localPath: String, remotePath: String, mode: DbxWriteMode): Future[Entry]
-
-  /**
-   * Download a file
-   *
-   * @param localPath local path
-   * @param remotePath remote path
-   * @param revision revision
-   */
-  def download(localPath: String, remotePath: String, revision: Option[String] = None): Future[LocalFile]
-
-  /**
-   * List the files
-   *
-   * @param remotePath remote path
-   */
-  def listFiles(remotePath: String): Future[DirectoryListing]
-
-  /**
-   * Search for files which match the query
-   *
-   * @param query criteria
-   * @param path path where to search, it will recurse into child items
-   */
-  def search(query: String, path: String = "/"): Future[SearchResult]
-
-  /**
-   * Poll for changes
-   *
-   * @param interval interval between refreshes
-   * @param f function which will be run on every refresh
-   */
-  def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit): Cancellable
-}
 
 /**
  * Client Implementation
