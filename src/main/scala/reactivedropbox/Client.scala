@@ -3,7 +3,7 @@ package reactivedropbox
 import com.dropbox.core.DbxWriteMode
 import scala.concurrent.Future
 import reactivedropbox.core.{SearchResult, DirectoryListing, LocalFile, Entry}
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import akka.actor.Cancellable
 
 /**
@@ -52,4 +52,9 @@ trait Client {
    * @param f function which will be run on every refresh
    */
   def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit): Cancellable
+
+  /**
+   * Stop all polling
+   */
+  def stopPolling()
 }

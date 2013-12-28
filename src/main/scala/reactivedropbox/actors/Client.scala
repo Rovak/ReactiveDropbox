@@ -1,12 +1,11 @@
 package reactivedropbox.actors
 
 import com.dropbox.core._
-import reactivedropbox.core._
 import java.io.{FileOutputStream, File, FileInputStream}
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import akka.actor.TypedActor
+import akka.actor.{Cancellable, TypedActor}
 import reactivedropbox.core._
 import reactivedropbox.Client
 
@@ -24,6 +23,8 @@ class DefaultClient(config: DbxRequestConfig, accessToken: String) extends Clien
   val client = new DbxClient(config, accessToken)
   var deltaCursor: String = null
   var cache = List[DeltaItem]()
+  var pollers = List[Cancellable]()
+  var isFirstRun = true
 
   /**
    * Upload a file to dropbox
@@ -45,7 +46,7 @@ class DefaultClient(config: DbxRequestConfig, accessToken: String) extends Clien
    * @param localFile Local location where to place the new file
    * @return New local file
    */
-  def download(remoteFile: String, localFile: String, revision: Option[String] = None) = Future {
+  def download(localFile: String, remoteFile: String, revision: Option[String] = None) = Future {
     val outputStream = new FileOutputStream(localFile)
     try {
       val downloadedFile = client.getFile(remoteFile, revision.getOrElse(null), outputStream)
@@ -93,24 +94,38 @@ class DefaultClient(config: DbxRequestConfig, accessToken: String) extends Clien
   }
 
   /**
+   * Polls the client for any changes in dropbox
+   *
    * @param interval interval between refreshes
    * @param f function which will be run on every refresh
    * @return
    */
   def poll(interval: FiniteDuration = 5.minutes)(f: Any => Unit) = {
     var pollCache = cache.toList
-    TypedActor.context.system.scheduler.schedule(interval, interval) {
+    val cancelable = TypedActor.context.system.scheduler.schedule(0 seconds, interval) {
       refresh()
-      // Find all added entries
-      cache.filterNot(pollCache.toSet).foreach {
-        case DeltaItem(path, entry) => f(EntryAdded(entry))
-      }
-      // Find all removed entries
-      pollCache.filterNot(cache.toSet).foreach {
-        case DeltaItem(path, entry) => f(EntryRemoved(entry))
-      }
+      if (!isFirstRun) {
+        // Find all added entries
+        cache.filterNot(pollCache.toSet).foreach {
+          case DeltaItem(path, entry) => f(EntryAdded(entry))
+        }
+        // Find all removed entries
+        pollCache.filterNot(cache.toSet).foreach {
+          case DeltaItem(path, entry) => f(EntryRemoved(entry))
+        }
+      } else isFirstRun = false
       pollCache = cache
     }
+    pollers ::= cancelable
+    cancelable
+  }
+
+  /**
+   * Stops all polling
+   */
+  def stopPolling() = {
+    pollers.filter(_.isCancelled).map(_.cancel())
+    pollers = List()
   }
 }
 
