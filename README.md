@@ -1,8 +1,6 @@
 ReactiveDropbox
 ===============
 
-Non-blocking Dropbox SDK
-
 ## Polling
 
 ```scala
